@@ -4,8 +4,9 @@ package fizzbuzz_test
 
 import (
 	"fmt"
-	"hello/fizzbuzz"
 	"testing"
+
+	"github.com/pallat/hello/fizzbuzz"
 )
 
 func TestFizzBuzz1To100(t *testing.T) {
