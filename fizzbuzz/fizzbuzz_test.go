@@ -11,3 +11,13 @@ func TestFizzzBuzzGivenOneSayOne(t *testing.T) {
 		t.Errorf("given %v want %q but get %q", given, want, get)
 	}
 }
+
+func TestFizzzBuzzGivenTwoSayTwo(t *testing.T) {
+	var given = 2
+	var want = "2"
+
+	get := Say(given)
+	if want != get {
+		t.Errorf("given %v want %q but get %q", given, want, get)
+	}
+}
