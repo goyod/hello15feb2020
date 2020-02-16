@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/pallat/hello/fizzbuzz"
@@ -22,16 +23,20 @@ func main() {
 
 	// Routes
 	e.GET("/oscarmale", oscarmale)
-	e.GET("/fizzbuzz/:number", fizzbuzzHandler)
+	e.GET("/fizzbuzz/:number", fizzbuzzHandler, authorizeMiddleware("GMMx4P8OI8"))
 	e.POST("/fizzbuzz", postFizzBuzzHandler)
 
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	h := &randomFizzBuzz{random: r1}
+	h := &randomFizzBuzz{random: IntnFunc(rand.Intn)}
 	e.GET("/fizzbuzzr", h.handler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
+}
+
+type IntnFunc func(int) int
+
+func (fn IntnFunc) Intn(n int) int {
+	return fn(n)
 }
 
 // Handler
@@ -40,7 +45,34 @@ func oscarmale(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+func authorizeMiddleware(key string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			tokenString := c.Request().Header.Get("Authorization")[7:]
+
+			var getSecretKey = func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				}
+
+				return []byte(key), nil
+			}
+
+			_, err := jwt.Parse(tokenString, getSecretKey)
+
+			if err != nil {
+				return c.JSON(http.StatusUnauthorized, map[string]string{
+					"error": "token is not valid",
+				})
+			}
+
+			return next(c)
+		}
+	}
+}
+
 func fizzbuzzHandler(c echo.Context) error {
+
 	numberString := c.Param("number")
 	n, _ := strconv.Atoi(numberString)
 	return c.String(http.StatusOK, fizzbuzz.Say(n))
