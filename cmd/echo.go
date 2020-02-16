@@ -63,11 +63,14 @@ func (r *randomFizzBuzz) handler(c echo.Context) error {
 }
 
 func randomFizzBuzzHandler(c echo.Context) error {
-	n := rand.Intn(100)
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, fizzbuzzController(rand.Intn(100)))
+}
+
+func fizzbuzzController(n int) map[string]interface{} {
+	return map[string]interface{}{
 		"number":  n,
 		"message": fizzbuzz.Say(n),
-	})
+	}
 }
 
 func postFizzBuzzHandler(c echo.Context) error {
